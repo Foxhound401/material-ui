@@ -1,88 +1,98 @@
-import React from 'react';
+import * as React from 'react';
 import PropTypes from 'prop-types';
 import {
-  ThemeProvider as MuiThemeProvider,
-  createMuiTheme as createLegacyModeTheme,
-  unstable_createMuiStrictModeTheme as createStrictModeTheme,
-  darken,
-} from '@material-ui/core/styles';
-import { useSelector } from 'react-redux';
-import useMediaQuery from '@material-ui/core/useMediaQuery';
-import { enUS, zhCN, faIR, ruRU, ptBR, esES, frFR, deDE, jaJP } from '@material-ui/core/locale';
-import { blue, pink } from '@material-ui/core/colors';
+  ThemeProvider as MdThemeProvider,
+  createTheme as createMdTheme,
+} from '@mui/material/styles';
+import { deepmerge } from '@mui/utils';
+import { enUS, zhCN, ptBR } from '@mui/material/locale';
+import { unstable_useEnhancedEffect as useEnhancedEffect } from '@mui/material/utils';
 import { getCookie } from 'docs/src/modules/utils/helpers';
 import useLazyCSS from 'docs/src/modules/utils/useLazyCSS';
+import { useUserLanguage } from '@mui/docs/i18n';
+import { getDesignTokens, getThemedComponents, getMetaThemeColor } from '@mui/docs/branding';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import useLocalStorageState from '@mui/utils/useLocalStorageState';
 
 const languageMap = {
   en: enUS,
   zh: zhCN,
-  fa: faIR,
-  ru: ruRU,
   pt: ptBR,
-  es: esES,
-  fr: frFR,
-  de: deDE,
-  ja: jaJP,
 };
-
-export const themeColor = blue[700];
 
 const themeInitialOptions = {
   dense: false,
   direction: 'ltr',
   paletteColors: {},
   spacing: 8, // spacing unit
+  paletteMode: 'light',
 };
 
-const highDensity = {
-  props: {
+export const highDensity = {
+  components: {
     MuiButton: {
-      size: 'small',
+      defaultProps: {
+        size: 'small',
+      },
     },
     MuiFilledInput: {
-      margin: 'dense',
+      defaultProps: {
+        margin: 'dense',
+      },
     },
     MuiFormControl: {
-      margin: 'dense',
+      defaultProps: {
+        margin: 'dense',
+      },
     },
     MuiFormHelperText: {
-      margin: 'dense',
+      defaultProps: {
+        margin: 'dense',
+      },
     },
     MuiIconButton: {
-      size: 'small',
+      defaultProps: {
+        size: 'small',
+      },
     },
     MuiInputBase: {
-      margin: 'dense',
+      defaultProps: {
+        margin: 'dense',
+      },
     },
     MuiInputLabel: {
-      margin: 'dense',
+      defaultProps: {
+        margin: 'dense',
+      },
     },
     MuiListItem: {
-      dense: true,
+      defaultProps: {
+        dense: true,
+      },
     },
     MuiOutlinedInput: {
-      margin: 'dense',
+      defaultProps: {
+        margin: 'dense',
+      },
     },
     MuiFab: {
-      size: 'small',
+      defaultProps: {
+        size: 'small',
+      },
     },
     MuiTable: {
-      size: 'small',
+      defaultProps: {
+        size: 'small',
+      },
     },
     MuiTextField: {
-      margin: 'dense',
+      defaultProps: {
+        margin: 'dense',
+      },
     },
     MuiToolbar: {
-      variant: 'dense',
-    },
-  },
-  overrides: {
-    MuiIconButton: {
-      sizeSmall: {
-        // minimal touch target hit spacing
-        marginLeft: 4,
-        marginRight: 4,
-        padding: 12,
+      defaultProps: {
+        variant: 'dense',
       },
     },
   },
@@ -94,15 +104,6 @@ export const DispatchContext = React.createContext(() => {
 
 if (process.env.NODE_ENV !== 'production') {
   DispatchContext.displayName = 'ThemeDispatchContext';
-}
-
-const useEnhancedEffect = typeof window === 'undefined' ? React.useEffect : React.useLayoutEffect;
-
-let createMuiTheme;
-if (process.env.REACT_MODE === 'legacy') {
-  createMuiTheme = createLegacyModeTheme;
-} else {
-  createMuiTheme = createStrictModeTheme;
 }
 
 export function ThemeProvider(props) {
@@ -144,9 +145,18 @@ export function ThemeProvider(props) {
           paletteColors: themeInitialOptions.paletteColors,
         };
       case 'CHANGE':
+        // No value changed
+        if (
+          (!action.payload.paletteMode || action.payload.paletteMode === state.paletteMode) &&
+          (!action.payload.direction || action.payload.direction === state.direction) &&
+          (!action.payload.paletteColors || action.payload.paletteColors === state.paletteColors)
+        ) {
+          return state;
+        }
+
         return {
           ...state,
-          paletteType: action.payload.paletteType || state.paletteType,
+          paletteMode: action.payload.paletteMode || state.paletteMode,
           direction: action.payload.direction || state.direction,
           paletteColors: action.payload.paletteColors || state.paletteColors,
         };
@@ -155,80 +165,100 @@ export function ThemeProvider(props) {
     }
   }, themeInitialOptions);
 
-  const userLanguage = useSelector((state) => state.options.userLanguage);
-  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-  const preferredType = prefersDarkMode ? 'dark' : 'light';
-  const { dense, direction, paletteColors, paletteType = preferredType, spacing } = themeOptions;
+  const userLanguage = useUserLanguage();
+  const { dense, direction, paletteColors, paletteMode, spacing } = themeOptions;
 
   useLazyCSS('/static/styles/prism-okaidia.css', '#prismjs');
 
-  React.useEffect(() => {
-    if (process.browser) {
-      const nextPaletteColors = JSON.parse(getCookie('paletteColors') || 'null');
-      const nextPaletteType = getCookie('paletteType');
-
-      dispatch({
-        type: 'CHANGE',
-        payload: { paletteColors: nextPaletteColors, paletteType: nextPaletteType },
-      });
-    }
-  }, []);
-
-  // persist paletteType
-  React.useEffect(() => {
-    document.cookie = `paletteType=${paletteType};path=/;max-age=31536000`;
-  }, [paletteType]);
+  // TODO replace with useColorScheme once all pages support css vars
+  const { mode, systemMode } = useColorSchemeShim();
+  const calculatedMode = mode === 'system' ? systemMode : mode;
 
   useEnhancedEffect(() => {
-    document.body.dir = direction;
+    let nextPaletteColors = JSON.parse(getCookie('paletteColors') || 'null');
+    // Set default value if no value is found in cookie
+    if (nextPaletteColors === null) {
+      nextPaletteColors = themeInitialOptions.paletteColors;
+    }
+
+    dispatch({
+      type: 'CHANGE',
+      payload: {
+        paletteColors: nextPaletteColors,
+        paletteMode: calculatedMode,
+      },
+    });
+  }, [calculatedMode]);
+
+  useEnhancedEffect(() => {
+    document.body.setAttribute('dir', direction);
   }, [direction]);
 
+  useEnhancedEffect(() => {
+    // To support light and dark mode images in the docs
+    if (paletteMode === 'dark') {
+      document.body.classList.remove('mode-light');
+      document.body.classList.add('mode-dark');
+    } else {
+      document.body.classList.remove('mode-dark');
+      document.body.classList.add('mode-light');
+    }
+
+    const metas = document.querySelectorAll('meta[name="theme-color"]');
+    metas.forEach((meta) => {
+      meta.setAttribute('content', getMetaThemeColor(paletteMode));
+    });
+  }, [paletteMode]);
+
   const theme = React.useMemo(() => {
-    const nextTheme = createMuiTheme(
+    const brandingDesignTokens = getDesignTokens(paletteMode);
+    const nextPalette = deepmerge(brandingDesignTokens.palette, paletteColors);
+    let nextTheme = createMdTheme(
       {
         direction,
-        nprogress: {
-          color: paletteType === 'light' ? '#000' : '#fff',
-        },
+        ...brandingDesignTokens,
         palette: {
-          primary: {
-            main: paletteType === 'light' ? blue[700] : blue[200],
+          ...nextPalette,
+          mode: paletteMode,
+        },
+        // v5 migration
+        props: {
+          MuiBadge: {
+            overlap: 'rectangular',
           },
-          secondary: {
-            main: paletteType === 'light' ? darken(pink.A400, 0.1) : pink[200],
-          },
-          type: paletteType,
-          background: {
-            default: paletteType === 'light' ? '#fff' : '#121212',
-          },
-          ...paletteColors,
         },
         spacing,
       },
       dense ? highDensity : null,
+      {
+        components: {
+          MuiCssBaseline: {
+            defaultProps: {
+              // TODO: Material UI v6, makes this the default
+              enableColorScheme: true,
+            },
+          },
+        },
+      },
       languageMap[userLanguage],
     );
 
-    nextTheme.palette.background.level2 =
-      paletteType === 'light' ? nextTheme.palette.grey[100] : '#333';
-
-    nextTheme.palette.background.level1 =
-      paletteType === 'light' ? '#fff' : nextTheme.palette.grey[900];
+    nextTheme = deepmerge(nextTheme, getThemedComponents(nextTheme));
 
     return nextTheme;
-  }, [dense, direction, paletteColors, paletteType, spacing, userLanguage]);
+  }, [dense, direction, paletteColors, paletteMode, spacing, userLanguage]);
 
   React.useEffect(() => {
     // Expose the theme as a global variable so people can play with it.
-    if (process.browser) {
-      window.theme = theme;
-    }
+    window.theme = theme;
+    window.createTheme = createMdTheme;
   }, [theme]);
 
+  // TODO: remove MdThemeProvider, top level layout should render the default theme.
   return (
-    <MuiThemeProvider theme={theme}>
+    <MdThemeProvider theme={theme}>
       <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
-    </MuiThemeProvider>
+    </MdThemeProvider>
   );
 }
 
@@ -242,4 +272,17 @@ ThemeProvider.propTypes = {
 export function useChangeTheme() {
   const dispatch = React.useContext(DispatchContext);
   return React.useCallback((options) => dispatch({ type: 'CHANGE', payload: options }), [dispatch]);
+}
+
+// TODO: remove once all pages support css vars and replace call sites with useColorScheme()
+export function useColorSchemeShim() {
+  const [mode, setMode] = useLocalStorageState('mui-mode', 'system');
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)', { noSsr: true });
+  const systemMode = prefersDarkMode ? 'dark' : 'light';
+
+  return {
+    mode,
+    systemMode,
+    setMode,
+  };
 }

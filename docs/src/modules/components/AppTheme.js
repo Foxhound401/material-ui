@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import PropTypes from 'prop-types';
 import Head from 'docs/src/modules/components/Head';
 
@@ -16,5 +16,5 @@ export default function AppTheme(props) {
 }
 
 AppTheme.propTypes = {
-  children: PropTypes.element.isRequired,
+  children: PropTypes.node.isRequired,
 };

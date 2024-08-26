@@ -1,92 +1,164 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import Typography from '@material-ui/core/Typography';
-import { useSelector } from 'react-redux';
-import { useTheme, makeStyles } from '@material-ui/core/styles';
-import AddIcon from '@material-ui/icons/Add';
+import * as React from 'react';
+import { styled, alpha } from '@mui/material/styles';
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import Divider from '@mui/material/Divider';
+import Typography from '@mui/material/Typography';
+import { Link } from '@mui/docs/Link';
+import { useTranslate } from '@mui/docs/i18n';
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    '& a': {
-      display: 'block',
-    },
-    '& img': {
-      display: 'inline-block',
-    },
+const NativeLink = styled('a')(({ theme }) => ({
+  boxSizing: 'border-box', // TODO have CssBaseline in the Next.js layout
+  width: '100%',
+  height: 45,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderLeft: '1px solid',
+  borderRight: '1px solid',
+  borderBottom: 0,
+  borderColor: (theme.vars || theme).palette.divider,
+  transition: theme.transitions.create(['background-color']),
+  '&:first-of-type': {
+    borderTop: `1px solid ${(theme.vars || theme).palette.divider}`,
+    borderRadius: '12px 12px 0 0',
   },
-  placeholder: {
-    width: 125,
-    height: 35,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: theme.shape.borderRadius,
-    color: theme.palette.divider,
-    border: `1px dashed ${theme.palette.divider}`,
-    transition: theme.transitions.create(['color', 'border-color']),
-    '&&': {
-      display: 'flex',
-    },
+  '&:hover': {
+    backgroundColor: (theme.vars || theme).palette.grey[50],
+  },
+  '&:focus-visible': {
+    outline: `3px solid ${alpha(theme.palette.primary[500], 0.5)}`,
+    outlineOffset: '-3px',
+  },
+  '& img': {
+    display: 'inline-block',
+  },
+  ...theme.applyDarkStyles({
     '&:hover': {
-      borderColor: 'currentColor',
-      color: theme.palette.text.secondary,
+      backgroundColor: alpha(theme.palette.primary[900], 0.1),
     },
-  },
+  }),
 }));
 
-// Persisted for the whole session.
-// The state is used to avoid layout jumps during the session (navigation between different pages).
-const randomSession = Math.random();
-
-export default function DiamondSponsors(props) {
-  const classes = useStyles();
-  const { spot } = props;
-  const theme = useTheme();
-  const t = useSelector((state) => state.options.t);
-  const [randomSencha, setRandomSencha] = React.useState(1);
-
-  React.useEffect(() => {
-    setRandomSencha(randomSession);
-  }, []);
+export default function DiamondSponsors() {
+  const t = useTranslate();
 
   return (
-    <div className={classes.root}>
-      <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
-        {t('diamondSponsors')}
-      </Typography>
-      {randomSencha < 0.01 ? (
-        <a
-          data-ga-event-category="sponsor"
-          data-ga-event-action={spot}
-          data-ga-event-label="sencha"
-          href="https://www.sencha.com/products/extreact/extreact-for-material-ui/?utm_source=materialui&utm_medium=referral&utm_content=product-200429-extreactmaterialui"
-          rel="noopener noreferrer sponsored"
-          target="_blank"
-          style={{ marginLeft: 8, width: 125, height: 35 }}
-        >
-          <img
-            width="125"
-            height="35"
-            src={`/static/in-house/sencha-125x35-${theme.palette.type}.svg`}
-            alt="sencha"
-            title="UI Components for Productive Dev Teams"
-            loading="lazy"
-          />
-        </a>
-      ) : null}
-      <a
-        style={{ marginTop: 8 }}
-        aria-label={t('diamondSponsors')}
-        className={classes.placeholder}
-        rel="noopener noreferrer"
+    <Stack direction="column" sx={{ mt: 2 }}>
+      <NativeLink
+        data-ga-event-category="sponsor"
+        data-ga-event-action="docs-premium"
+        data-ga-event-label="octopus.com"
+        href="https://octopus.com/?utm_source=materialui&utm_medium=referral"
+        rel="noopener sponsored"
         target="_blank"
-        href="/discover-more/backers/#diamond"
       >
-        <AddIcon />
-      </a>
-    </div>
+        <Box
+          component="img"
+          src="/static/sponsors/octopus-light.svg"
+          alt="octopus"
+          title="Repeatable, reliable deployments"
+          loading="lazy"
+          sx={[
+            {
+              height: '25px',
+              width: '116px',
+            },
+            (theme) =>
+              theme.applyDarkStyles({
+                content: `url(/static/sponsors/octopus-dark.svg)`,
+              }),
+          ]}
+        />
+      </NativeLink>
+      <Divider />
+      <NativeLink
+        data-ga-event-category="sponsor"
+        data-ga-event-action="docs-premium"
+        data-ga-event-label="doit.com"
+        href="https://www.doit.com/?utm_source=materialui&utm_medium=referral"
+        rel="noopener sponsored"
+        target="_blank"
+      >
+        <Box
+          component="img"
+          src="/static/sponsors/doit-light.svg"
+          alt="doit"
+          title="Management Platform for Google Cloud and AWS"
+          loading="lazy"
+          sx={[
+            {
+              height: '29px',
+              width: '70px',
+            },
+            (theme) =>
+              theme.applyDarkStyles({
+                content: `url(/static/sponsors/doit-dark.svg)`,
+              }),
+          ]}
+        />
+      </NativeLink>
+      <Divider />
+      <NativeLink
+        data-ga-event-category="sponsor"
+        data-ga-event-action="docs-premium"
+        data-ga-event-label="marblism.com"
+        href="https://www.marblism.com/?utm_source=mui"
+        rel="noopener sponsored"
+        target="_blank"
+      >
+        <Box
+          component="img"
+          src="/static/sponsors/marblism-light.svg"
+          alt="marblism"
+          title="AI web app generation"
+          loading="lazy"
+          sx={[
+            {
+              height: '27px',
+              width: '90px',
+            },
+            (theme) =>
+              theme.applyDarkStyles({
+                content: `url(/static/sponsors/marblism-dark.svg)`,
+              }),
+          ]}
+        />
+      </NativeLink>
+      <Link
+        href="/material-ui/discover-more/backers/#diamond-sponsors"
+        sx={(theme) => ({
+          height: 45,
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '1px dashed',
+          borderColor: (theme.vars || theme).palette.grey[300],
+          borderRadius: '0 0 12px 12px',
+          backgroundColor: alpha(theme.palette.primary[50], 0.4),
+          transition: theme.transitions.create(['color', 'background-color']),
+          '&:hover': {
+            backgroundColor: (theme.vars || theme).palette.primary[50],
+            borderColor: (theme.vars || theme).palette.primary[200],
+          },
+          '&:focus-visible': {
+            outlineOffset: '-3px',
+          },
+          ...theme.applyDarkStyles({
+            backgroundColor: alpha(theme.palette.primaryDark[700], 0.3),
+            borderColor: alpha(theme.palette.primaryDark[600], 0.5),
+            '&:hover': {
+              backgroundColor: alpha(theme.palette.primary[700], 0.1),
+              borderColor: alpha(theme.palette.primary[600], 0.4),
+            },
+          }),
+        })}
+      >
+        <Typography variant="caption" sx={{ fontWeight: 'medium' }}>
+          {t('becomeADiamondSponsor')}
+        </Typography>
+      </Link>
+    </Stack>
   );
 }
-
-DiamondSponsors.propTypes = {
-  spot: PropTypes.string.isRequired,
-};
